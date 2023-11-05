@@ -1,0 +1,24 @@
+version: '3.7'
+services:
+  db:
+    image: bitnami/postgresql:15.1.0
+    restart: always
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres_data:/bitnami/postgresql
+    env_file:
+      - .env
+    environment:
+      - POSTGRESQL_DATABASE=${POSTGRES_DATABASE}
+      - POSTGRESQL_USERNAME=${POSTGRES_USER}
+      - POSTGRESQL_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRESQL_REPLICATION_MODE=master
+    networks:
+      - posthub-dev
+volumes:
+  postgres_data:
+  static:
+networks:
+  posthub-dev:
+    external: true
