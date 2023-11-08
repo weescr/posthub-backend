@@ -1,0 +1,14 @@
+[tool.poetry]
+name = "posthub"
+version = "0.1.0"
+description = "Бэкенд-сервер для автоматизации публикаций в социальных сетях"
+authors = ["Nikita Sergievsky <ReetRay@protonmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
