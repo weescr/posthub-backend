@@ -15,21 +15,19 @@ async def create_post(data: PostDTO, db: AsyncSession):
             video=data.video,
             publication_date=data.publication_date
         )
-        async with db.begin():
-            db.add(post)
-            await db.commit()
-            await db.refresh(post)
+        db.add(post)
+        await db.commit()
+        await db.refresh(post)
     except Exception as e:
         print(e)
     return post
 
 
 async def get_post(id: int, db: AsyncSession):
-    async with db.begin():
-        result = await db.execute(
-            select(Post).where(Post.id == id)
-        )
-        post = result.scalars().first()
+    result = await db.execute(
+        select(Post).where(Post.id == id)
+    )
+    post = result.scalar_one()
     return post
 
 
@@ -48,4 +46,4 @@ async def remove_post(db: AsyncSession, id: int):
     stmt = delete(Post).where(Post.id == id)
     result = await db.execute(stmt)
     await db.commit()
-    return result.rowcount
+    return result
