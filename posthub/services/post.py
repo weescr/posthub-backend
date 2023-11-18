@@ -7,20 +7,17 @@ from sqlalchemy import select
 
 
 async def create_post(data: PostDTO, db: AsyncSession):
-    try:
-        post = Post(
-            title=data.title,
-            description=data.description,
-            photo=data.photo,
-            video=data.video,
-            publication_date=data.publication_date
-        )
-        db.add(post)
-        await db.commit()
-        await db.refresh(post)
-    except Exception as e:
-        print(e)
-    return post
+    new_post = Post(
+        title=data.title,
+        description=data.description,
+        content=data.content,
+        publication_date=data.publication_date
+    )
+    db.add(new_post)
+    await db.commit()
+    await db.refresh(new_post)
+
+    return new_post
 
 
 async def get_post(id: int, db: AsyncSession):
@@ -31,19 +28,30 @@ async def get_post(id: int, db: AsyncSession):
     return post
 
 
-async def update_post(data: PostDTO, db: AsyncSession, id: int):
-    query = (
-        update(Post)
-        .where(Post.id == id)
-        .values(data.dict(exclude_unset=True))
-        .returning(Post)
+async def get_post_id_by_title(title: str, db: AsyncSession):
+    result = await db.execute(
+        select(Post.id)
+        .where(
+            Post.title == title
+        )
     )
-    updated_post = (await db.execute(query)).scalar_one()
+    post_id = result.scalar_one_or_none()
+    return post_id
+
+async def update_post(data: PostDTO, db: AsyncSession, id: int):
+    async with db.begin():
+        query = (
+            update(Post)
+            .where(Post.id == id)
+            .values(data.dict(exclude_unset=True))
+            .returning(Post)
+        )
+        updated_post = (await db.execute(query)).scalar_one()
     return updated_post
 
 
 async def remove_post(db: AsyncSession, id: int):
-    stmt = delete(Post).where(Post.id == id)
-    result = await db.execute(stmt)
+    query = delete(Post).where(Post.id == id)
+    result = await db.execute(query)
     await db.commit()
     return result
