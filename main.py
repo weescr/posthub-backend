@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
 
 import posthub.app.healthcheck.controllers as healthcheck
-from posthub.app.post import controllers as PostControllers
+from posthub.app.posts import controllers as PostControllers
 from posthub import exceptions
 from posthub.db import get_session
 from posthub.logger import logger
