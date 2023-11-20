@@ -1,6 +1,7 @@
+from posthub.db.base import Base
 from logging.config import fileConfig
 from posthub.config import Settings
-from posthub.models.post import Post
+from posthub.app.posts.models import Post
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
@@ -16,7 +17,6 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-from posthub.db.base import Base
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
@@ -24,6 +24,7 @@ target_metadata = Base.metadata
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 config.set_main_option("sqlalchemy.url", settings.ALEMBIC_DATABASE_URL)
+
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
