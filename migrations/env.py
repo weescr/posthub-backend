@@ -1,6 +1,6 @@
 from posthub.db.base import Base
 from logging.config import fileConfig
-from posthub.config import Settings
+from posthub.config import settings
 from posthub.app.posts.models import Post
 from alembic import context
 from sqlalchemy import engine_from_config, pool
@@ -8,7 +8,6 @@ from sqlalchemy import engine_from_config, pool
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
-settings = Settings()
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
