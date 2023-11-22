@@ -4,6 +4,7 @@ from fastapi.responses import ORJSONResponse
 
 import posthub.app.healthcheck.controllers as healthcheck
 from posthub.app.posts import controllers as PostControllers
+from posthub.app.auth import controllers as AuthControllers
 from posthub import exceptions
 from posthub.db import get_session
 from posthub.logger import logger
@@ -26,7 +27,7 @@ app.add_middleware(
 
 app.include_router(healthcheck.router, tags=["healthcheck"])
 app.include_router(PostControllers.router, tags=["post"])
-
+app.include_router(AuthControllers.router, tags=["auth"])
 
 @app.exception_handler(Exception)
 async def uvicorn_base_exception_handler(request: Request, exc: Exception):
