@@ -1,4 +1,6 @@
 import sqlalchemy as sa
+from sqlalchemy.orm import relationship
+from posthub.app.auth.models import User
 from posthub.db.base import Base
 from posthub.db.connection import db_session
 from .views import Post as ValidatorsPost
@@ -11,6 +13,9 @@ class Post(Base):
     description = sa.Column(sa.String)
     content = sa.Column(sa.String, nullable=True)
     publication_date = sa.Column(sa.DateTime(timezone=True), server_default=sa.sql.func.now())
+    owner_id = sa.Column(sa.Integer, sa.ForeignKey(User.id))
+
+    owner = relationship("User", back_populates="posts")
 
     @classmethod
     async def create_post(cls, data: ValidatorsPost):
