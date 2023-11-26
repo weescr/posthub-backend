@@ -1,4 +1,5 @@
 import sqlalchemy as sa
+from sqlalchemy.orm import relationship
 from posthub.db.base import Base
 from posthub.db.connection import db_session
 
@@ -13,6 +14,8 @@ class User(Base):
     password = sa.Column("password", sa.String, nullable=False)
     email_adress = sa.Column("email", sa.String, unique=True, nullable=True, default="your@example.com")
     tg_channel = sa.Column("tg_channel", sa.String, nullable=True, default="@yourtgchannel")
+
+    posts = relationship("Post", back_populates="owner")
 
     @classmethod
     async def create_user(cls, data: UserRegistrationView):
