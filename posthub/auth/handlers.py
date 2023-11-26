@@ -44,9 +44,9 @@ def get_expired_time(token_type: TokenType) -> int:
     now = datetime.now()
 
     if token_type == TokenType.ACCESS:
-        now += settings.ACCESS_TOKEN_EXP
+        now += settings.ACCESS_TOKEN_EXPIRES
     if token_type == TokenType.REFRESH:
-        now += settings.REFRESH_TOKEN_EXP
+        now += settings.REFRESH_TOKEN_EXPIRES
 
     return int(now.timestamp())
 
@@ -75,7 +75,7 @@ def generate_tokens(sub: str, username: str,) -> dict:
 def decode_token(token: str) -> RefreshTokenView:
     try:
         payload = jwt.decode(
-            token, settings.JWT_SECRET, algorithms=[settings.JWT_ALG], options={"verify_signature": True}
+            token, SECRET, algorithms=[ALGORITHM], options={"verify_signature": True}
         )
         if not payload:
             raise UnauthorizedError
