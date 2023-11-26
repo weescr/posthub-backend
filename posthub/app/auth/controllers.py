@@ -7,7 +7,8 @@ from .views import (
     UserRegistrationView,
     UserUpdateView,
     TokenRequestView,
-    UserProfileView
+    UserProfileView,
+    TokenResponseView
 )
 from posthub.exceptions import (
     UserAlreadyRegistered,
@@ -23,10 +24,10 @@ router = APIRouter()
 
 
 @router.post("/user/auth/refresh_token")
-async def refresh_token(body: TokenRequestView):
+async def refresh_token(body: TokenRequestView) -> Response[TokenResponseView]:
     token = decode_token(body.refresh_token)
     async with Transaction():
-        user = await UserService.get_user_by_id(token.sub)
+        user = await UserService.get_user_by_id(int(token.sub))
 
     if not user:
         raise UserNotFoundError
@@ -47,25 +48,15 @@ async def create_user(data: UserRegistrationView):
         if user:
             raise UserAlreadyRegistered
 
-        user_id = await UserService.create_user(data=data)
+        user_id = await UserService.create_user(
+            username=data.username,
+            password=get_password_hash(data.password),
+            email=data.email_adress,
+            tg_channel=data.tg_channel,
+        )
     return Response(
         message="Пользователь успешно создан",
         payload=generate_tokens(sub=str(user_id), username=data.username)
-    )
-
-
-@router.put("/user/update_profile/{id}")
-async def update_user_data(data: UserUpdateView, id: int):
-    async with Transaction():
-        check_user = await UserService.get_user_by_id(user_id=id)
-
-        if not check_user:
-            raise UserNotFoundError
-
-        updated_user = await UserService.update_user_info(data=data, user_id=id)
-    return Response(
-        message="Информация о пользователе обновлена",
-        payload=generate_tokens(sub=str(updated_user.id), username=updated_user.username)
     )
 
 
@@ -78,7 +69,6 @@ async def login_user(data: UserLoginView):
         raise UserNotFoundError
 
     hashed_password = get_password_hash(data.password)
-
     if user.password == hashed_password:
         return Response(
             payload=generate_tokens(
