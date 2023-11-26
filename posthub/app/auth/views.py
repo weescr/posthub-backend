@@ -1,5 +1,6 @@
 from pydantic import BaseModel
-
+from posthub.config import settings
+from enum import Enum
 
 class UserRegistrationView(BaseModel):
     username: str
@@ -18,5 +19,34 @@ class UserUpdateView(BaseModel):
     email_adress: str
 
 
-class UserGetProfileView(BaseModel):
+class UserProfileView(BaseModel):
     username: str
+
+
+class TokenRequestView(BaseModel):
+    access_token: str
+    refresh_token: str
+
+
+class TokenResponseView(BaseModel):
+    access_token: str
+    refresh_token: str
+    exp: int
+
+
+class TokenType(Enum):
+    ACCESS = 1
+    REFRESH = 2
+
+
+class AccessTokenView(BaseModel):
+    iss: str = settings.app_name
+    sub: str | int
+    exp: int
+    username: str
+
+
+class RefreshTokenView(BaseModel):
+    iss: str = settings.app_name
+    sub: str | int
+    exp: int
