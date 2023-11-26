@@ -18,14 +18,14 @@ class User(Base):
     posts = relationship("Post", back_populates="owner")
 
     @classmethod
-    async def create_user(cls, data: UserRegistrationView):
+    async def create_user(cls, username: str, password: str, email: str, tg_channel: str):
         query = (
             sa.insert(User)
             .values(
-                username=data.username,
-                password=data.password,
-                email=data.email_adress,
-                tg_channel=data.tg_channel,
+                username=username,
+                password=password,
+                email=email,
+                tg_channel=tg_channel,
             )
             .returning(User.id)
         )
@@ -46,6 +46,17 @@ class User(Base):
         query = (
             sa.select(User)
             .where(User.username == username)
+        )
+        user = await db_session.get().execute(query)
+        return user.scalars().first()
+
+    @classmethod
+    async def user_validation(cls, id: int, password: str):
+        query = (
+            sa.select(User)
+            .where(
+                User.id == id and User.password == password
+            )
         )
         user = await db_session.get().execute(query)
         return user.scalars().first()
