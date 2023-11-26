@@ -1,4 +1,5 @@
 from pathlib import Path
+from datetime import timedelta
 from typing import Any, Mapping, Optional
 
 from pydantic import BaseSettings, PostgresDsn, validator
@@ -24,9 +25,11 @@ class Settings(BaseSettings):
     CELERY_BROKER_URL: str = "redis://localhost:6379/0"
     CELERY_BACKEND_URL: str = "redis://localhost:6379/1"
 
+    JWT_SECRET: str
     AUTH_ALGORITHM: str = "RS256"
-    ACCESS_TOKEN_EXPIRES: int = 15 * 60
-    REFRESH_TOKEN_EXPIRES = 60 * 60 * 24 * 30
+    
+    ACCESS_TOKEN_EXPIRES = timedelta(days=1)
+    REFRESH_TOKEN_EXPIRES = timedelta(days=30)
 
     @validator("DATABASE_URL", pre=True)
     def assemble_postgres_db_url(
