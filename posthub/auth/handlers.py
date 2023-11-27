@@ -2,8 +2,8 @@ import time
 import jwt
 
 from datetime import datetime
-from fastapi import Request
-from guardpost.authentication import AuthenticationHandler, Identity
+from fastapi import Request, HTTPException
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import ValidationError
 
 
@@ -23,21 +23,32 @@ from posthub.config import settings
 
 
 # Класс для проверки на аутентификацию пользователя в системе
-class AuthHandler(AuthenticationHandler):
-    def __init__(self):
-        pass
-
-    async def authenticate(self, context: Request) -> Identity | None:
-        header_value = context.get_first_header(b"Authorization")
-        if header_value:
-            token = header_value.decode().split()[-1]
-            decoded_data = jwt.decode(
-                token, SECRET, algorithms=[ALGORITHM], options={"verify_signature": True}
-            )
-            context.user = Identity(claims=decoded_data, authentication_mode="access_token")
+class AuthHandler(HTTPBearer):
+    def __init__(self, auto_error: bool = True):
+        super(AuthHandler, self).__init__(auto_error=auto_error)
+    
+    async def __call__(self, request: Request):
+        credentials: HTTPAuthorizationCredentials = await super(AuthHandler, self).__call__(request)
+        if credentials:
+            if not credentials.scheme == "Bearer":
+                raise HTTPException(status_code=403, detail="Invalid authentication scheme.")
+            if not self.verify_jwt(credentials.credentials):
+                raise HTTPException(status_code=403, detail="Invalid token or expired token.")
+            return credentials.credentials
         else:
-            context.user = None
-        return context.user
+            raise HTTPException(status_code=403, detail="Invalid authorization code.")
+    
+    
+    def verify_jwt(self, jwtoken: str) -> bool:
+        isTokenValid: bool = False
+
+        try:
+            payload = decode_token(jwtoken)
+        except:
+            payload = None
+        if payload:
+            isTokenValid = True
+        return isTokenValid
 
 
 def get_expired_time(token_type: TokenType) -> int:
