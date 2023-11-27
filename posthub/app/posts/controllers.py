@@ -1,14 +1,14 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from posthub.app.posts.models import Post as PostService
 from posthub.app.posts import views as ValidatorsPost
 from posthub.db.connection import Transaction
 from posthub.protocol import Response
-
+from posthub.auth.handlers import AuthHandler
 
 router = APIRouter()
 
 
-@router.post("/post")
+@router.post("/post", dependencies=[Depends(AuthHandler())])
 async def create_post(data: ValidatorsPost.Post):
     async with Transaction():
         new_post = await PostService.create_post(data=data)
@@ -22,7 +22,7 @@ async def create_post(data: ValidatorsPost.Post):
     )
 
 
-@router.get("/post/{id}")
+@router.get("/post/{id}", dependencies=[Depends(AuthHandler())])
 async def get_post_by_id(id: int):
     async with Transaction():
         post = await PostService.get_post_by_id(id=id)
@@ -40,7 +40,7 @@ async def get_post_by_id(id: int):
     )
 
 
-@router.get("/post/title/{title}")
+@router.get("/post/title/{title}", dependencies=[Depends(AuthHandler())])
 async def get_post_id_by_title(title: str):
     async with Transaction():
         post_id = await PostService.get_post_id_by_title(title=title)
@@ -53,7 +53,7 @@ async def get_post_id_by_title(title: str):
     )
 
 
-@router.put("/post/{id}")
+@router.put("/post/{id}", dependencies=[Depends(AuthHandler())])
 async def update_post(id: int, data: ValidatorsPost.Post):
     async with Transaction():
         updated_post = await PostService.update_post(data=data, id=id)
@@ -69,7 +69,7 @@ async def update_post(id: int, data: ValidatorsPost.Post):
     )
 
 
-@router.delete("/post/{id}")
+@router.delete("/post/{id}", dependencies=[Depends(AuthHandler())])
 async def delete_post(id: int):
     async with Transaction():
         await PostService.delete_post(id=id)
