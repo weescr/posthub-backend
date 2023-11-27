@@ -4,7 +4,6 @@ from dotenv import load_dotenv
 import jwt
 
 from posthub.app.auth.views import AccessTokenView, RefreshTokenView
-from posthub.config import settings
 
 load_dotenv()
 SECRET = os.getenv("JWT_SECRET")
