@@ -71,6 +71,7 @@ async def login_user(data: UserLoginView):
     hashed_password = get_password_hash(data.password)
     if user.password == hashed_password:
         return Response(
+            message="Вход успешно выполнен",
             payload=generate_tokens(
                 sub=str(user.id),
                 username=user.username,
@@ -79,14 +80,14 @@ async def login_user(data: UserLoginView):
     raise PasswordMatchError
 
 
-@router.post("/user/profile")
+@router.post("/user/profile", dependencies=[Depends(AuthHandler())])
 async def get_profile(data: UserProfileView):
     async with Transaction():
         user_data = await UserService.get_user_by_username(data.username)
         if not user_data:
             raise UserNotFoundError
 
-        return Response[UserProfileView](
+        return Response(
             message="Профиль существует!",
             payload={
                 "username": user_data.username,
@@ -96,7 +97,7 @@ async def get_profile(data: UserProfileView):
         )
 
 
-@router.delete("/user/profile")
+@router.delete("/user/profile", dependencies=[Depends(AuthHandler())])
 async def delete_profile(user_token: int):
     async with Transaction():
         await UserService.delete_user(id=user_token)
