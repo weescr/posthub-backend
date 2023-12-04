@@ -1,9 +1,14 @@
 import sqlalchemy as sa
-from sqlalchemy.orm import relationship
-from posthub.app.auth.models import User
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 from posthub.db.base import Base
+from posthub.app.auth.models import User
 from posthub.db.connection import db_session
 from .views import Post as ValidatorsPost
+from typing import TYPE_CHECKING
+
+#Чтобы не было циклических импортов
+if TYPE_CHECKING:
+    from posthub.app.auth.models import User
 
 
 class Post(Base):
@@ -13,9 +18,9 @@ class Post(Base):
     description = sa.Column(sa.String)
     content = sa.Column(sa.String, nullable=True)
     publication_date = sa.Column(sa.DateTime(timezone=True), server_default=sa.sql.func.now())
-    owner_id = sa.Column(sa.Integer, sa.ForeignKey(User.id))
-
-    owner = relationship("User", back_populates="posts")
+    user_id = sa.Column("user_id", sa.Integer, sa.ForeignKey("users.id"))
+    
+    user: Mapped["User"] = relationship(back_populates="posts")
 
     @classmethod
     async def create_post(cls, data: ValidatorsPost):
