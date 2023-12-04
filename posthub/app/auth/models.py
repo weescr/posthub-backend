@@ -1,9 +1,13 @@
 import sqlalchemy as sa
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Mapped
 from posthub.db.base import Base
 from posthub.db.connection import db_session
+from typing import TYPE_CHECKING
+from .views import UserUpdateView
 
-from .views import UserRegistrationView, UserUpdateView
+
+if TYPE_CHECKING:
+    from posthub.app.posts.models import Post
 
 
 class User(Base):
@@ -15,7 +19,7 @@ class User(Base):
     email_adress = sa.Column("email", sa.String, unique=True, nullable=True, default="your@example.com")
     tg_channel = sa.Column("tg_channel", sa.String, nullable=True, default="@yourtgchannel")
 
-    posts = relationship("Post", back_populates="owner")
+    posts: Mapped[list["Post"]] = relationship(back_populates="user")
 
     @classmethod
     async def create_user(cls, username: str, password: str, email: str, tg_channel: str):
