@@ -1,11 +1,8 @@
-from fastapi import APIRouter, Depends
-from guardpost.authentication import Identity
-
+from fastapi import APIRouter, Depends, HTTPException
 from posthub.app.auth.models import User as UserService
 from .views import (
     UserLoginView,
     UserRegistrationView,
-    UserUpdateView,
     TokenRequestView,
     UserProfileView,
     TokenResponseView
@@ -80,25 +77,31 @@ async def login_user(data: UserLoginView):
     raise PasswordMatchError
 
 
-@router.post("/user/profile", dependencies=[Depends(AuthHandler())])
-async def get_profile(data: UserProfileView):
+@router.get("/user/profile", response_model=UserProfileView, dependencies=[Depends(AuthHandler())])
+async def get_profile(current_user: str = Depends(AuthHandler())) -> UserProfileView:
+    try:
+        token_data = decode_token(current_user)
+        user_id = token_data.sub
+    except Exception as e:
+        raise HTTPException(status_code=401, detail="Invalid token") from e
+    
     async with Transaction():
-        user_data = await UserService.get_user_by_username(data.username)
+        user_data = await UserService.get_user_by_id(int(user_id))
         if not user_data:
             raise UserNotFoundError
+        return UserProfileView(username=user_data.username)
 
-        return Response(
-            message="Профиль существует!",
-            payload={
-                "username": user_data.username,
-                "tg_channel": user_data.tg_channel,
-                "email": user_data.email_adress
-            }
-        )
 
 
 @router.delete("/user/profile", dependencies=[Depends(AuthHandler())])
-async def delete_profile(user_token: int):
+async def delete_profile(current_user: str = Depends(AuthHandler())) -> Response:
+    try:
+        token_data = decode_token(current_user)
+        user_id = int(token_data.sub)
+    except Exception as e:
+        raise HTTPException(status_code=401, detail="Invalid token") from e
+    
     async with Transaction():
-        await UserService.delete_user(id=user_token)
+        await UserService.delete_user(id=user_id)
     return Response()
+
