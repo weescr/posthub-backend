@@ -17,9 +17,8 @@ class User(Base):
     username = sa.Column("username", sa.String, unique=True, nullable=False)
     password = sa.Column("password", sa.String, nullable=False)
     email_adress = sa.Column("email", sa.String, unique=True, nullable=True, default="your@example.com")
-    tg_channel = sa.Column("tg_channel", sa.String, nullable=True, default="@yourtgchannel")
-
-    posts: Mapped[list["Post"]] = relationship(back_populates="user")
+    tg_channel = sa.Column("tg_channel", sa.String, nullable=True,
+                           default="@yourtgchannel", server_default="@yourtgchannel")
 
     @classmethod
     async def create_user(cls, username: str, password: str, email: str, tg_channel: str):
