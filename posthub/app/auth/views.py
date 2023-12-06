@@ -21,6 +21,9 @@ class UserUpdateView(BaseModel):
 
 class UserProfileView(BaseModel):
     username: str
+    
+    class Config:
+        orm_mode = True
 
 
 class TokenRequestView(BaseModel):
