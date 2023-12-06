@@ -14,7 +14,7 @@ class Post(Base):
     user_id = sa.Column("user_id", sa.Integer, sa.ForeignKey("users.id"))
 
     @classmethod
-    async def create_post(cls, data: ValidatorsPost):
+    async def create_post(cls, data: ValidatorsPost, owner_id: int):
         query = (
             sa.insert(Post)
             .values(
@@ -22,11 +22,13 @@ class Post(Base):
                 description=data.description,
                 content=data.content,
                 publication_date=data.publication_date,
+                user_id=owner_id
             )
             .returning(Post)
         )
         post = await db_session.get().execute(query)
         return post.scalars().first()
+
 
     @classmethod
     async def get_post_by_id(cls, id: int):
