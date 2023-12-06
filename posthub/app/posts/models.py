@@ -1,14 +1,7 @@
 import sqlalchemy as sa
-from sqlalchemy.orm import relationship, Mapped, mapped_column
 from posthub.db.base import Base
-from posthub.app.auth.models import User
 from posthub.db.connection import db_session
-from .views import Post as ValidatorsPost
-from typing import TYPE_CHECKING
-
-#Чтобы не было циклических импортов
-if TYPE_CHECKING:
-    from posthub.app.auth.models import User
+from .views import PostView as ValidatorsPost
 
 
 class Post(Base):
@@ -19,8 +12,6 @@ class Post(Base):
     content = sa.Column(sa.String, nullable=True)
     publication_date = sa.Column(sa.DateTime(timezone=True), server_default=sa.sql.func.now())
     user_id = sa.Column("user_id", sa.Integer, sa.ForeignKey("users.id"))
-    
-    user: Mapped["User"] = relationship(back_populates="posts")
 
     @classmethod
     async def create_post(cls, data: ValidatorsPost):
@@ -41,14 +32,6 @@ class Post(Base):
     async def get_post_by_id(cls, id: int):
         query = sa.select(Post).where(
             Post.id == id
-        )
-        post = await db_session.get().execute(query)
-        return post.scalars().first()
-
-    @classmethod
-    async def get_post_id_by_title(cls, title: str):
-        query = sa.select(Post.id).where(
-            Post.title == title
         )
         post = await db_session.get().execute(query)
         return post.scalars().first()
