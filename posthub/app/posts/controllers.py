@@ -4,75 +4,59 @@ from posthub.app.posts import views as ValidatorsPost
 from posthub.db.connection import Transaction
 from posthub.protocol import Response
 from posthub.auth.handlers import AuthHandler
+from posthub.auth.handlers import decode_token
+from posthub.exceptions import UnauthorizedError
 
 router = APIRouter()
 
 
 @router.post("/post", dependencies=[Depends(AuthHandler())])
-async def create_post(data: ValidatorsPost.Post):
+async def create_post(data: ValidatorsPost.PostView, current_user: int = Depends(AuthHandler())):
     async with Transaction():
-        new_post = await PostService.create_post(data=data)
-    data = {
-        "id": new_post.id,
-        "title": new_post.title,
-    }
+        new_post = await PostService.create_post(data=data, owner_id=int(decode_token(current_user).sub))
+
     return Response(
         message="Успешно создан новый пост",
-        payload= data
+        payload=ValidatorsPost.PostView.from_orm(new_post)
     )
 
 
 @router.get("/post/{id}", dependencies=[Depends(AuthHandler())])
-async def get_post_by_id(id: int):
+async def get_post_by_id(id: int, current_user: int = Depends(AuthHandler())):
     async with Transaction():
         post = await PostService.get_post_by_id(id=id)
-        
-    data = {
-        "title": post.title,
-        "description": post.description,
-        "content": post.content,
-        "date": post.publication_date
-    }
-
-    return Response(
-        message="Пост существует",
-        payload=data
-    )
-
-
-@router.get("/post/title/{title}", dependencies=[Depends(AuthHandler())])
-async def get_post_id_by_title(title: str):
-    async with Transaction():
-        post_id = await PostService.get_post_id_by_title(title=title)
-
-    return Response(
-        message="Id поста успешно получен",
-        payload={
-            "id": post_id
-        }
-    )
+        owner_id=int(decode_token(current_user).sub)
+        if (post.user_id == owner_id) and (post.user_id is not None):
+            return Response(
+            message="Пост существует",
+            payload=ValidatorsPost.PostView.from_orm(post)
+        )
+        raise UnauthorizedError
 
 
 @router.put("/post/{id}", dependencies=[Depends(AuthHandler())])
-async def update_post(id: int, data: ValidatorsPost.Post):
+async def update_post(id: int, data: ValidatorsPost.PostView, current_user: int = Depends(AuthHandler())):
     async with Transaction():
         updated_post = await PostService.update_post(data=data, id=id)
-    data = {
-        "title": updated_post.title,
-        "description": updated_post.description,
-        "content": updated_post.content,
-        "publication_date": updated_post.publication_date
-    }
-    return Response(
-        message="Пост успешно обновлен",
-        payload=data
-    )
+        owner_id=int(decode_token(current_user).sub)
+        if updated_post.user_id == owner_id:
+            return Response(
+                message="Пост успешно обновлен",
+                payload=ValidatorsPost.PostView.from_orm(updated_post)
+            )
+        raise UnauthorizedError
 
 
 @router.delete("/post/{id}", dependencies=[Depends(AuthHandler())])
-async def delete_post(id: int):
+async def delete_post(id: int, current_user: int = Depends(AuthHandler())):
     async with Transaction():
-        await PostService.delete_post(id=id)
-    return Response(
-        message="Пост успешно удален"
-    )
+        owner_id = int(decode_token(current_user).sub)
+        post = await PostService.get_post_by_id(id=id)
+        if post.user_id == owner_id:
+            await PostService.delete_post(id=id)
+            return Response(
+                message="Пост успешно удален"
+            )
+        else:
+            raise UnauthorizedError
+
