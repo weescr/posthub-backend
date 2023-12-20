@@ -2,7 +2,7 @@ import sqlalchemy as sa
 from posthub.db.base import Base
 from posthub.db.connection import db_session
 from .views import PostView as ValidatorsPost
-
+from posthub.app.auth.models import User
 
 class Post(Base):
     __tablename__ = 'posts'
@@ -11,7 +11,7 @@ class Post(Base):
     description = sa.Column(sa.String)
     content = sa.Column(sa.String, nullable=True)
     publication_date = sa.Column(sa.DateTime(timezone=True), server_default=sa.sql.func.now())
-    user_id = sa.Column("user_id", sa.Integer, sa.ForeignKey("users.id"))
+    user_id = sa.Column("user_id", sa.Integer, sa.ForeignKey(User.id))
 
     @classmethod
     async def create_post(cls, data: ValidatorsPost, owner_id: int):
