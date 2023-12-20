@@ -10,7 +10,7 @@ from .views import (
 from posthub.exceptions import (
     UserAlreadyRegistered,
     UserNotFoundError,
-    PasswordMatchError
+    PasswordMatchError,
 )
 from posthub.db.connection import Transaction
 from posthub.protocol import Response
@@ -20,7 +20,7 @@ from posthub.auth.hash import get_password_hash
 router = APIRouter()
 
 
-@router.post("/user/auth/refresh_token")
+@router.post("/auth/refresh_token")
 async def refresh_token(body: TokenRequestView) -> Response[TokenResponseView]:
     token = decode_token(body.refresh_token)
     async with Transaction():
@@ -38,7 +38,7 @@ async def refresh_token(body: TokenRequestView) -> Response[TokenResponseView]:
     )
 
 
-@router.post("/user/auth/registration")
+@router.post("/auth/registration")
 async def create_user(data: UserRegistrationView):
     async with Transaction():
         user = await UserService.get_user_by_username(username=data.username)
@@ -57,7 +57,7 @@ async def create_user(data: UserRegistrationView):
     )
 
 
-@router.post("/user/auth/login")
+@router.post("/auth/login")
 async def login_user(data: UserLoginView):
     async with Transaction():
         user = await UserService.get_user_by_username(username=data.username)
@@ -77,14 +77,40 @@ async def login_user(data: UserLoginView):
     raise PasswordMatchError
 
 
-@router.get("/user/profile", response_model=UserProfileView, dependencies=[Depends(AuthHandler())])
+@router.post("/auth/update_vk_token", dependencies=[Depends(AuthHandler())])
+async def update_vk_token(token_to_update: str, current_user: str = Depends(AuthHandler())):
+    try:
+        usr_id = int(decode_token(current_user).sub)
+    except Exception as e:
+        raise HTTPException(status_code=401, detail="Invalid token") from e
+
+    async with Transaction():
+        await UserService.update_vk_token(vk_token=token_to_update, user_id=usr_id)
+        return Response(
+            message="ВК токен успешно добавлен/обновлен!"
+        )
+    
+@router.post("/auth/update_tg_bot_token", dependencies=[Depends(AuthHandler())])
+async def update_tg_token(token_to_update: str, current_user: str = Depends(AuthHandler())):
+    try:
+        usr_id = int(decode_token(current_user).sub)
+    except Exception as e:
+        raise HTTPException(status_code=401, detail="Invalid token") from e
+    async with Transaction():
+        await UserService.update_tg_bot_token(tg_bot_token=token_to_update, user_id=usr_id)
+        return Response(
+            message="Токен телеграм бота добавлен/обновлен!"
+        )
+
+
+@router.get("/profile", response_model=UserProfileView, dependencies=[Depends(AuthHandler())])
 async def get_profile(current_user: str = Depends(AuthHandler())) -> UserProfileView:
     try:
         token_data = decode_token(current_user)
         user_id = token_data.sub
     except Exception as e:
         raise HTTPException(status_code=401, detail="Invalid token") from e
-    
+
     async with Transaction():
         user_data = await UserService.get_user_by_id(int(user_id))
         if not user_data:
@@ -92,16 +118,14 @@ async def get_profile(current_user: str = Depends(AuthHandler())) -> UserProfile
         return UserProfileView(username=user_data.username)
 
 
-
-@router.delete("/user/profile", dependencies=[Depends(AuthHandler())])
+@router.delete("/profile", dependencies=[Depends(AuthHandler())])
 async def delete_profile(current_user: str = Depends(AuthHandler())) -> Response:
     try:
         token_data = decode_token(current_user)
         user_id = int(token_data.sub)
     except Exception as e:
         raise HTTPException(status_code=401, detail="Invalid token") from e
-    
+
     async with Transaction():
         await UserService.delete_user(id=user_id)
-    return Response()
-
+    return Response(message="Профиль успешно удален!")
