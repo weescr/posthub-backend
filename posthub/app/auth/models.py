@@ -1,13 +1,7 @@
 import sqlalchemy as sa
-from sqlalchemy.orm import relationship, Mapped
 from posthub.db.base import Base
 from posthub.db.connection import db_session
-from typing import TYPE_CHECKING
 from .views import UserUpdateView
-
-
-if TYPE_CHECKING:
-    from posthub.app.posts.models import Post
 
 
 class User(Base):
@@ -19,6 +13,8 @@ class User(Base):
     email_adress = sa.Column("email", sa.String, unique=True, nullable=True, default="your@example.com")
     tg_channel = sa.Column("tg_channel", sa.String, nullable=True,
                            default="@yourtgchannel", server_default="@yourtgchannel")
+    vk_token = sa.Column("vk_token", sa.String, nullable=True)
+    tg_bot_token = sa.Column("tg_bot_token", sa.String, nullable=True)
 
     @classmethod
     async def create_user(cls, username: str, password: str, email: str, tg_channel: str):
@@ -54,30 +50,35 @@ class User(Base):
         return user.scalars().first()
 
     @classmethod
-    async def user_validation(cls, id: int, password: str):
-        query = (
-            sa.select(User)
-            .where(
-                User.id == id and User.password == password
-            )
-        )
-        user = await db_session.get().execute(query)
-        return user.scalars().first()
-
-    @classmethod
-    async def update_user_info(cls, data: UserUpdateView, user_id: int):
-        query = (
-            sa.update(User)
-            .where(User.id == user_id)
-            .values(data.dict(exclude_unset=True))
-        ).returning(User)
-        updated_user = await db_session.get().execute(query)
-        return updated_user.scalars().first()
-
-    @classmethod
     async def delete_user(cls, id: int):
         query = (
             sa.delete(cls)
             .where(cls.id == id)
         )
         await db_session.get().execute(query)
+
+    @classmethod
+    async def update_vk_token(cls, vk_token: str, user_id: int):
+        query = (
+            sa.update(User)
+            .where(User.id == user_id)
+            .values(
+                vk_token=vk_token
+            )
+            .returning(User.vk_token)
+        )
+        upd_token = await db_session.get().execute(query)
+        return upd_token.scalars().first()
+
+    @classmethod
+    async def update_tg_bot_token(cls, tg_bot_token: str, user_id: int):
+        query = (
+            sa.update(User)
+            .where(User.id == user_id)
+            .values(
+                tg_bot_token=tg_bot_token
+            )
+            .returning(User.tg_bot_token)
+        )
+        upd_token = await db_session.get().execute(query)
+        return upd_token.scalars().first()
