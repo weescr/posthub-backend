@@ -62,3 +62,19 @@ class ForbiddenError(ApiException):
 class UpgradeRequiredError(ApiException):
     status_code = 426
     message = "Upgrade required"
+
+
+class UserAlreadyRegistered(ApiException):
+    status_code = 400
+    message = "User already registered"
+
+
+class JWTDecodeError(ApiException):
+    status_code = 401
+    message = "Token decode error"
+
+
+class JWTExpiredSignatureError(ApiException):
+    status_code = 426
+    message = "Token expired"
+
