@@ -1,8 +1,6 @@
 import sqlalchemy as sa
 from posthub.db.base import Base
 from posthub.db.connection import db_session
-from .views import UserUpdateView
-
 
 class User(Base):
     __tablename__ = 'users'
@@ -82,3 +80,28 @@ class User(Base):
         )
         upd_token = await db_session.get().execute(query)
         return upd_token.scalars().first()
+    
+    @classmethod
+    async def get_vk_token(cls, user_id: int):
+        query = (
+            sa.select(User.vk_token).where(User.id == user_id)
+        )
+        vk_token = await db_session.get().execute(query)
+        return vk_token.scalars().first()
+    
+    @classmethod
+    async def get_tgbot_token(cls, user_id: int):
+        query = (
+            sa.select(User.tg_bot_token).where(User.id == user_id)
+        )
+        vk_token = await db_session.get().execute(query)
+        return vk_token.scalars().first()
+    
+    @classmethod
+    async def get_tgchannel(cls, user_id: int):
+        query = (
+            sa.select(User.tg_channel).where(User.id == user_id)
+        )
+        vk_token = await db_session.get().execute(query)
+        return vk_token.scalars().first()
+
