@@ -78,3 +78,7 @@ class JWTExpiredSignatureError(ApiException):
     status_code = 426
     message = "Token expired"
 
+
+class SocialTokenError(ApiException):
+    status_code = 400
+    message = "vk token/tg_token/tg_channel error"
