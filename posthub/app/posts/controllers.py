@@ -29,16 +29,16 @@ async def create_post(data: ValidatorsPost.PostView, current_user: int = Depends
                 raise SocialTokenError from e
 
             finally:
-                 # константы с вк
+                # константы с вк
                 vk = vk_session.get_api()
                 users = vk_session.method("users.get")
                 user_id = users[0]['id']
-                #Тут параметры, плюс постик сразу делаем, потому что мы крутые
+                # Тут параметры, плюс постик сразу делаем, потому что мы крутые
                 params = {
-                'owner_id': user_id,
-                'message': f"{data.title}\n\n{data.description}\n\n{data.content}",
+                    'owner_id': user_id,
+                    'message': f"{data.title}\n\n{data.description}\n\n{data.content}",
                 }
-                #делаем вещи этой строчкой
+                # делаем вещи этой строчкой
                 vk.wall.post(**params)
             try:
                 tg_bot = Bot(token=tgbot_token)
@@ -54,7 +54,7 @@ async def create_post(data: ValidatorsPost.PostView, current_user: int = Depends
                 await tg_bot.send_message(**tg_params)
         else:
             raise SocialTokenError
-       
+
         new_post = await PostService.create_post(data=data, owner_id=usr_id)
 
     return Response(
