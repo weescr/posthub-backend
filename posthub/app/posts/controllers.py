@@ -1,4 +1,3 @@
-import vk_api
 from telegram import Bot
 from fastapi import APIRouter, Depends
 from posthub.app.posts.models import Post as PostService
@@ -9,7 +8,7 @@ from posthub.protocol import Response
 from posthub.auth.handlers import AuthHandler
 from posthub.auth.handlers import decode_token
 from posthub.exceptions import UnauthorizedError, SocialTokenError
-
+from posthub.posts.post import post_to_telegram, post_to_vk
 router = APIRouter()
 
 
@@ -23,35 +22,19 @@ async def create_post(data: ValidatorsPost.PostView, current_user: int = Depends
         tgbot_token = await User.get_tgbot_token(user_id=usr_id)
         tg_channel = await User.get_tgchannel(user_id=usr_id)
         if vk_token is not None and tgbot_token is not None and tg_channel is not None:
-            try:
-                vk_session = vk_api.VkApi(token=vk_token)
-            except Exception as e:
-                raise SocialTokenError from e
-
-            finally:
-                # константы с вк
-                vk = vk_session.get_api()
-                users = vk_session.method("users.get")
-                user_id = users[0]['id']
-                # Тут параметры, плюс постик сразу делаем, потому что мы крутые
-                params = {
-                    'owner_id': user_id,
-                    'message': f"{data.title}\n\n{data.description}\n\n{data.content}",
-                }
-                # делаем вещи этой строчкой
-                vk.wall.post(**params)
-            try:
-                tg_bot = Bot(token=tgbot_token)
-            except Exception as e:
-                raise SocialTokenError from e
-            finally:
-                tg_params = {
-                    'chat_id': tg_channel,
-                    'text': f"{data.title}\n\n{data.description}\n\n{data.content}",
-                    'parse_mode': 'Markdown',
-                    'disable_web_page_preview': True,
-                }
-                await tg_bot.send_message(**tg_params)
+           await post_to_vk(
+               vk_token=vk_token, 
+               title=data.title, 
+               description=data.description,
+               content=data.content
+               )
+           await post_to_telegram(
+               tgbot_token=tgbot_token,
+               tg_channel=tg_channel,
+               title=data.title,
+               description=data.description,
+               content=data.content
+           )
         else:
             raise SocialTokenError
 
